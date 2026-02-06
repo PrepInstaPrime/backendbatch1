@@ -11,7 +11,8 @@ const productSchema= new mongoose.Schema({
         expire:Date,
         properties:String,
      },
-     productId:String
+     productId:String,
+     isDelete:{type:Boolean,default:false}
 },{timestamps:true})
 const productModel=mongoose.model("Product",productSchema)
 export default productModel;
