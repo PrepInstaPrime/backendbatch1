@@ -1,6 +1,9 @@
+import e from "express";
 import userModel from "../models/userModel.mjs";
 import { validateEmail,validatePassword,validatePhone,validateUsername } from "../utils/valid.mjs";
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken';
+import config from "../../config.mjs";
 const registerUser= async (req,res)=>{
     try {
          let { name, email, password, username, dob, gender, phone, address } = req.body;
@@ -39,6 +42,27 @@ const registerUser= async (req,res)=>{
         }
     }
 }
+const login=async (req,res)=>{  
+    try {
+        const { email, password } = req.body;
+        const user = await userModel.findOne({ email });
+        if (!user) {
+            return res.status(404).send({ message: "failed", error: "User not found" });
+        }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).send({ message: "failed", error: "Invalid credentials" });
+        }
+        const token = jwt.sign({ id: user._id,email: user.email }, config.secretToken, { expiresIn: '1h' });
+        if(!token){
+            return res.status(500).send({ message: "failed", error: "Internal Server Error" });
+        }
+        res.setHeader("Authorization", `Bearer ${token}`);
+        return res.status(200).send({ message: "success", data: user});
+    } catch (error) {
+        return res.status(500).send({ message: "failed", error: "Internal Server Error" });
+    }
+}
 const getUser= async (req,res)=>{
     try {
         const { id } = req.params;
@@ -51,5 +75,18 @@ const getUser= async (req,res)=>{
         return res.status(500).send({ message: "failed", error: "Internal Server Error" });
     }
 }
+let updateUser= async (req,res)=>{
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+        const user = await userModel.findByIdAndUpdate(id, updates, { new: true });
+        if (!user) {
+            return res.status(404).send({ message: "failed", error: "User not found" });
+        }
+        return res.status(200).send({ message: "success", data: user });
+    } catch (error) {
+        return res.status(500).send({ message: "failed", error: "Internal Server Error" });
+    }
+}
 
-export { registerUser, getUser };
+export { registerUser, getUser, login, updateUser };

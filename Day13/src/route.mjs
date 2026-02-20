@@ -1,9 +1,13 @@
 import express from 'express'
 const router = express.Router()
-import { registerUser,getUser } from './controllers/userController.mjs'
+import { registerUser,getUser,login,updateUser} from './controllers/userController.mjs'
+import { authenticateToken } from './auth/authentication.mjs'
 router.get('/', (req, res) => {
   res.send('Hello World!')
 })
 router.post('/register', registerUser);
-router.get('/user/:id', getUser);
-export default router
+// here authenticateToken is custom middleware
+router.get('/user/:id', authenticateToken, getUser);
+router.post('/login', login);
+router.put('/user/:id', authenticateToken, updateUser);
+export default router;
